@@ -14,4 +14,3 @@ AS
 	ADD CONSTRAINT FK_Orders_Products
 	FOREIGN KEY (productId) REFERENCES Products(Id);
  END
-GO
