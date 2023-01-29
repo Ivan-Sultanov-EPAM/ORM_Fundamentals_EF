@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace EFDemo.Migrations
 {
-    [DbContext(typeof(EFDemoDbContext))]
+    [DbContext(typeof(EfDemoDbContext))]
     [Migration("20230129063411_initial")]
     partial class initial
     {

@@ -7,15 +7,15 @@ namespace EF.Tests
     public class TestBase : IDisposable
     {
         public readonly Dal Dal;
-        public EFDemoDbContext _dbContext;
+        public EfDemoDbContext DbContext;
 
         public TestBase()
         {
-            _dbContext = new EFDemoDbContext();
+            DbContext = new EfDemoDbContext();
             
-            _dbContext.Database.Migrate();
+            DbContext.Database.Migrate();
             
-            Dal = new Dal(_dbContext);
+            Dal = new Dal(DbContext);
 
             Dal.ClearAllData();
         }
@@ -23,7 +23,7 @@ namespace EF.Tests
         public void Dispose()
         {
             Dal.ClearAllData();
-            _dbContext.Dispose();
+            DbContext.Dispose();
         }
     }
 }

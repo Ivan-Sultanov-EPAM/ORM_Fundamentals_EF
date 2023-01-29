@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace EFDemo
 {
-    public class EFDemoDbContext : DbContext
+    public class EfDemoDbContext : DbContext
     {
         public DbSet<Product> Products { get; set; }
         public DbSet<Order> Orders { get; set; }

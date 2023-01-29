@@ -7,9 +7,9 @@ namespace EFDemo
 {
     public class Dal
     {
-        private readonly EFDemoDbContext _dbContext;
+        private readonly EfDemoDbContext _dbContext;
 
-        public Dal(EFDemoDbContext dbContext)
+        public Dal(EfDemoDbContext dbContext)
         {
             _dbContext = dbContext;
         }
