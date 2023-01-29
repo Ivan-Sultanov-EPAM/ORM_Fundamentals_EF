@@ -1,101 +1,123 @@
 ﻿using System.Collections.Generic;
-using System.Data;
-using System.Data.SqlClient;
 using System.Linq;
-using Dapper;
 using EFDemo.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace EFDemo
 {
     public class Dal
     {
-        private readonly SqlConnection _connection;
+        private readonly EFDemoDbContext _dbContext;
 
-        public Dal(SqlConnection connection)
+        public Dal(EFDemoDbContext dbContext)
         {
-            _connection = connection;
+            _dbContext = dbContext;
         }
 
         public void AddProduct(Product product)
         {
-            var sql = "INSERT INTO products (name, description, weight, height, width, length) values" +
-                              "(@Name, @Description, @Weight, @Height, @Width, @Length)";
+            _dbContext.Add(new Product
+            {
+                Name = product.Name,
+                Description = product.Description,
+                Weight = product.Weight,
+                Height = product.Height,
+                Width = product.Width,
+                Length = product.Length
+            });
 
-            _connection.Execute(sql, product);
+            _dbContext.SaveChanges();
         }
 
         public Product GetProductById(int id)
         {
-            var sql = "SELECT * FROM products WHERE id = @id";
-
-            return _connection.QueryFirstOrDefault<Product>(sql, new { id });
+            return _dbContext.Products
+                .FirstOrDefault(p => p.Id.Equals(id));
         }
 
         public void UpdateProduct(Product product)
         {
-            var sql = "UPDATE products SET " +
-                      "name = @Name," +
-                      "description = @Description," +
-                      "weight = @Weight," +
-                      "height = @Height," +
-                      "width = @Width," +
-                      "length = @Length WHERE id = @Id";
+            var productToUpdate = _dbContext.Products
+                .FirstOrDefault(p => p.Id.Equals(product.Id));
 
-            _connection.Execute(sql, product);
+            if (productToUpdate != null)
+            {
+                productToUpdate.Name = product.Name;
+                productToUpdate.Description = product.Description;
+                productToUpdate.Weight = product.Weight;
+                productToUpdate.Height = product.Height;
+                productToUpdate.Width = product.Width;
+                productToUpdate.Length = product.Length;
+            }
+
+            _dbContext.SaveChanges();
         }
 
         public void DeleteProduct(int id)
         {
-            var sql = "DELETE FROM products WHERE id = @id";
+            var productToRemove = _dbContext.Products
+                .FirstOrDefault(p => p.Id.Equals(id));
 
-            _connection.Execute(sql, new { id });
+            if (productToRemove != null)
+                _dbContext.Remove(productToRemove);
+
+            _dbContext.SaveChanges();
         }
 
         public List<Product> GetAllProducts()
         {
-            var sql = "SELECT * FROM products";
-
-            return _connection.Query<Product>(sql).ToList();
+            return _dbContext.Products.ToList();
         }
 
         public void AddOrder(Order order)
         {
-            var sql = "INSERT INTO orders (status, createdDate, updatedDate, productId) values " +
-                      "(@Status, @CreatedDate, @UpdatedDate, @ProductId)";
+            _dbContext.Add(new Order
+            {
+                Status = order.Status,
+                CreatedDate = order.CreatedDate,
+                UpdatedDate = order.UpdatedDate,
+                ProductId = order.ProductId
+            });
 
-            _connection.Execute(sql, order);
+            _dbContext.SaveChanges();
         }
 
         public Order GetOrderById(int id)
         {
-            var sql = "SELECT * FROM orders WHERE id = @id";
-
-            return _connection.QueryFirstOrDefault<Order>(sql, new { id });
+            return _dbContext.Orders
+                .FirstOrDefault(o => o.Id.Equals(id));
         }
 
         public void UpdateOrder(Order order)
         {
-            var sql = "UPDATE orders SET " +
-                      "status = @Status," +
-                      "createdDate = @CreatedDate," +
-                      "updatedDate = @UpdatedDate," +
-                      "productId = @ProductId WHERE id = @Id";
+            var orderToUpdate = _dbContext.Orders
+                .FirstOrDefault(o => o.Id.Equals(order.Id));
 
-            _connection.Execute(sql, order);
+            if (orderToUpdate != null)
+            {
+                orderToUpdate.Status = order.Status;
+                orderToUpdate.CreatedDate = order.CreatedDate;
+                orderToUpdate.UpdatedDate = order.UpdatedDate;
+                orderToUpdate.ProductId = order.ProductId;
+            }
+
+            _dbContext.SaveChanges();
         }
 
         public void DeleteOrder(int id)
         {
-            var sql = "DELETE FROM orders WHERE id = @id";
+            var orderToRemove = _dbContext.Orders
+                .FirstOrDefault(o => o.Id.Equals(id));
 
-            _connection.Execute(sql, new { id });
+            if (orderToRemove != null)
+                _dbContext.Remove(orderToRemove);
+
+            _dbContext.SaveChanges();
         }
 
         public List<Order> GetAllOrders()
         {
-            var sql = "SELECT * FROM orders";
-
-            return _connection.Query<Order>(sql).ToList();
+            return _dbContext.Orders.ToList();
         }
 
         public List<Order> GetFilteredOrders(
@@ -104,15 +126,9 @@ namespace EFDemo
             OrderStatus? status = null,
             int? product = null)
         {
-            var sql = "spGetFilteredOrders";
-
-            return _connection.Query<Order>(sql, new
-            {
-                Year = year,
-                Month = month,
-                Status = status,
-                Product = product
-            }, commandType: CommandType.StoredProcedure).ToList();
+            return _dbContext.Orders
+                .FromSqlRaw($"spGetFilteredOrders @p0, @p1, @p2, @p3", year, month, status, product)
+                .ToList();
         }
 
         public void DeleteOrders(
@@ -121,22 +137,13 @@ namespace EFDemo
             OrderStatus? status = null,
             int? product = null)
         {
-            var sql = "spDeleteOrders";
-
-            _connection.Execute(sql, new
-            {
-                Year = year,
-                Month = month,
-                Status = status,
-                Product = product
-            }, commandType: CommandType.StoredProcedure);
+            _dbContext.Database
+                .ExecuteSqlRaw("spDeleteOrders @p0, @p1, @p2, @p3", year, month, status, product);
         }
 
         public void ClearAllData()
         {
-            var sql = "spClearDb";
-
-            _connection.Execute(sql, commandType: CommandType.StoredProcedure);
+            _dbContext.Database.ExecuteSqlRaw("EXEC spClearDB");
         }
     }
 }
